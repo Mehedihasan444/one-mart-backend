@@ -10,7 +10,7 @@ const port = process.env.PORT || 5000;
 // ==========middleware==========
 app.use(
   cors({
-    origin: ["http://localhost:5173",],
+    origin: ["http://localhost:5173","https://one-mart-frontend.vercel.app/"],
     credentials: true,
   })
 );
@@ -41,10 +41,10 @@ async function run() {
       const result = await users.insertOne(user);
       res.send(result);
     });
-    // post user info
-    app.post("/users", async (req, res) => {
-      const user = req.body;
-      const result = await users.insertOne(user);
+    // post service info
+    app.post("/services", async (req, res) => {
+      const service = req.body;
+      const result = await services.insertOne(service);
       res.send(result);
     });
     // post user review
