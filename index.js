@@ -55,11 +55,28 @@ async function run() {
     });
 
     // get user info
-    app.get("/services", async (req, res) => {
+    // app.get("/services", async (req, res) => {
    
-      const result = await services.find().toArray();
-      res.send(result);
-    });
+    //   const result = await services.find().toArray();
+    //   res.send(result);
+    // });
+    app.get("/services/:category", async (req, res) => {
+      // Get the category parameter from the request and replace %20 with spaces
+      const category = req.params.category.replace(/%20/g, ' ');
+  
+      // Construct a MongoDB query to match categories with or without spaces
+      const query = { service: { $regex: new RegExp(category.replace(/\s+/g, '\\s*'), 'i') } };
+  
+      try {
+          // Find documents matching the category query
+          const result = await services.find(query).toArray();
+          res.send(result);
+      } catch (error) {
+          console.error("Error fetching reviews:", error);
+          res.status(500).send("Error fetching reviews");
+      }
+  });
+  
     // get user info
     app.get("/admin/users", async (req, res) => {
    
@@ -67,11 +84,29 @@ async function run() {
       res.send(result);
     });
     // get user info
-    app.get("/reviews/:category", async (req, res) => {
-   const query={category: req.params.category}
-      const result = await reviews.find(query).toArray();
-      res.send(result);
-    });
+  //   app.get("/reviews/:category", async (req, res) => {
+  //  const query={category: req.params.category}
+  //     const result = await reviews.find(query).toArray();
+  //     res.send(result);
+  //   });
+  app.get("/reviews/:category", async (req, res) => {
+    // Get the category parameter from the request
+    const category = req.params.category;
+    
+    // Construct a MongoDB query to match categories with or without spaces
+    const query = { category: { $regex: new RegExp(category.replace(/\s+/g, '\\s*'), 'i') } };
+
+    try {
+        // Find documents matching the category query
+        const result = await reviews.find(query).toArray();
+        res.send(result);
+    } catch (error) {
+        console.error("Error fetching reviews:", error);
+        res.status(500).send("Error fetching reviews");
+    }
+});
+
+
     // get user info
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
