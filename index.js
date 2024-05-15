@@ -10,7 +10,7 @@ const port = process.env.PORT || 5000;
 // ==========middleware==========
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://one-mart-frontend.vercel.app/"],
+    origin: ["http://localhost:5173", "https://one-mart-frontend.vercel.app"],
     credentials: true,
   })
 );
