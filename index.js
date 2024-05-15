@@ -54,27 +54,23 @@ async function run() {
       res.send(result);
     });
 
-    // get user info
+    // get services 
     app.get("/services", async (req, res) => {
 
       const result = await services.find().toArray();
       res.send(result);
     });
+
+    // get specific service
     app.get("/services/:id", async (req, res) => {
       const id = req.params.id
-
       const query = { _id: new ObjectId(id) };
+      const result = await services.findOne(query);
+      res.send(result);
 
-      try {
-        const result = await services.findOne(query);
-        res.send(result);
-      } catch (error) {
-        console.error("Error fetching reviews:", error);
-        res.status(500).send("Error fetching reviews");
-      }
     });
 
-    
+
     // get user info
     app.get("/admin/users", async (req, res) => {
 
@@ -82,24 +78,13 @@ async function run() {
       res.send(result);
     });
     // get user info
-    //   app.get("/reviews/:category", async (req, res) => {
-    //  const query={category: req.params.category}
-    //     const result = await reviews.find(query).toArray();
-    //     res.send(result);
-    //   });
     app.get("/reviews/:id", async (req, res) => {
-
       const id = req.params.id;
-
       const query = { serviceId: id };
 
-      try {
-        const result = await reviews.find(query).toArray();
-        res.send(result);
-      } catch (error) {
-        console.error("Error fetching reviews:", error);
-        res.status(500).send("Error fetching reviews");
-      }
+      const result = await reviews.find(query).toArray();
+      res.send(result);
+
     });
 
 
