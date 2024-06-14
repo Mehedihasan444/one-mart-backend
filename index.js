@@ -32,6 +32,7 @@ async function run() {
     const users = client.db("OneMart").collection("users");
     const services = client.db("OneMart").collection("services");
     const reviews = client.db("OneMart").collection("reviews")
+    const appointments = client.db("OneMart").collection("appointments")
     // =================== crud operations ======================
 
 
@@ -51,6 +52,12 @@ async function run() {
     app.post("/reviews", async (req, res) => {
       const user = req.body;
       const result = await reviews.insertOne(user);
+      res.send(result);
+    });
+    // post appointments
+    app.post("/appointments", async (req, res) => {
+      const user = req.body;
+      const result = await appointments.insertOne(user);
       res.send(result);
     });
 
@@ -120,7 +127,7 @@ async function run() {
       res.send(result);
     });
 
-    // make a user admin
+    // make a user admin====
     app.patch("/users/admin/:email", async (req, res) => {
       const email = req.params.email;
       const filter = { email: email };
