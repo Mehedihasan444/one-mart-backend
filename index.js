@@ -35,7 +35,6 @@ async function run() {
     const appointments = client.db("OneMart").collection("appointments");
     // =================== crud operations ======================
 
-
     // post user info
     app.post("/users", async (req, res) => {
       const user = req.body;
@@ -48,19 +47,19 @@ async function run() {
       const result = await services.insertOne(service);
       res.send(result);
     });
-        // update service
-        app.put("/admin/services/:id", async (req, res) => {
-          const id = req.params.id;
-          const data = req.body;
-          const filter = { _id: new ObjectId(id) };
-          const updatedDoc = {
-            $set: {
-              ...data
-            },
-          };
-          const result = await services.updateOne(filter, updatedDoc);
-          res.send(result);
-        });
+    // update service
+    app.put("/admin/services/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          ...data,
+        },
+      };
+      const result = await services.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
     // delete service info
     app.delete("/admin/services/:id", async (req, res) => {
       const id = req.params.id;
@@ -89,13 +88,13 @@ async function run() {
     // get all appointments
     app.get("/appointments/:email", async (req, res) => {
       const email = req.params.email;
-      const result = await appointments.find({email}).toArray();
+      const result = await appointments.find({ email }).toArray();
       res.send(result);
     });
     // delete appointments
     app.delete("/appointments/:id", async (req, res) => {
       const id = req.params.id;
-      const query= {_id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const result = await appointments.deleteOne(query);
       res.send(result);
     });
@@ -103,8 +102,10 @@ async function run() {
     // get services
     app.get("/services", async (req, res) => {
       const query = req.query.searchTerm; // Search query parameter
-      const filter = query ? { service: { $regex: `.*${query}.*`, $options: 'i' } } : {}; // Case-insensitive regex search
-  
+      const filter = query
+        ? { service: { $regex: `.*${query}.*`, $options: "i" } }
+        : {}; // Case-insensitive regex search
+
       const result = await services.find(filter).toArray();
       res.send(result);
     });
@@ -174,18 +175,20 @@ async function run() {
       res.send(result);
     });
     // appointment reschedule
- app.put("/admin/appointments/:id", async (req, res) => {
-  const { newDate } = req.body;
-  const id = req.params.id;
-  const filter = { _id: new ObjectId(id) };
-  const updatedDoc = {
-    $set: {
-      reschedule_date: newDate,
-    },
-  };
-  const result = await appointments.updateOne(filter, updatedDoc, { upsert: true });
-  res.send(result);
-});
+    app.put("/admin/appointments/:id", async (req, res) => {
+      const { newDate } = req.body;
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          reschedule_date: newDate,
+        },
+      };
+      const result = await appointments.updateOne(filter, updatedDoc, {
+        upsert: true,
+      });
+      res.send(result);
+    });
 
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
