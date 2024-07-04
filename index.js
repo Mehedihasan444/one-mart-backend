@@ -1,11 +1,19 @@
 const express = require("express");
 const cors = require("cors");
+const SSLCommerzPayment = require('sslcommerz-lts')
 // const jwt = require("jsonwebtoken");
 // const cookieParser=require('cookie-parser')
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
+
+
+// ssl commerz cresentials
+const store_id = process.env.storeID;
+const store_passwd = process.env.storePasswd;
+const is_live = false; //true for live, false for sandbox
+
 
 // ==========middleware==========
 app.use(
@@ -26,6 +34,7 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
 
 async function run() {
   try {
@@ -188,6 +197,88 @@ async function run() {
         upsert: true,
       });
       res.send(result);
+    });
+
+    app.post("/payment", async (req, res) => {
+      const tran_id = new ObjectId().toString();
+      const id = new ObjectId().toString();
+
+      const paymentInfo = req.body;
+
+      const data = {
+        total_amount: paymentInfo?.amount,
+        currency: "BDT",
+        tran_id: tran_id,
+        success_url: `http://localhost:5000/api/v1/user/payment/success/${tran_id}?id=${paymentInfo?.id}`,
+        fail_url: `http://localhost:5000/api/v1/user/payment/fail/${tran_id}?id=${paymentInfo?.id}`,
+        cancel_url: "http://localhost:3030/cancel",
+        ipn_url: "http://localhost:3030/ipn",
+        shipping_method: "Courier",
+        product_name: "combine food",
+        product_category: "Mix category",
+        product_profile: "general",
+        cus_name: paymentInfo?.name,
+        cus_email: paymentInfo?.email,
+        cus_add1: "Dhaka",
+        cus_add2: "Dhaka",
+        cus_city: "Dhaka",
+        cus_state: "Dhaka",
+        cus_postcode: "1000",
+        cus_country: "Bangladesh",
+        cus_phone: "01711111111",
+        cus_fax: "01711111111",
+        ship_name: "Customer Name",
+        ship_add1: "Dhaka",
+        ship_add2: "Dhaka",
+        ship_city: "Dhaka",
+        ship_state: "Dhaka",
+        ship_postcode: 1000,
+        ship_country: "Bangladesh",
+      };
+      
+      const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+      sslcz.init(data).then((apiResponse) => {
+        // Redirect the user to payment gateway
+        let GatewayPageURL = apiResponse.GatewayPageURL;
+        res.send({ url: GatewayPageURL });
+        console.log("Redirecting to: ", GatewayPageURL);
+      });
+
+      app.post("/api/v1/user/payment/success/:tranId", async (req, res) => {
+        const result = await appointments.updateOne(
+          { _id: new ObjectId(req.query.id)  },
+          {
+            $set: {
+              payment: "complete",
+              transactionId: req.params.tranId,
+            },
+        },{
+          upsert: true,
+        }
+        );
+        if (result.modifiedCount > 0) {
+          res.redirect(
+            `http://localhost:5173/api/v1/payment-complete/${req.params.tranId}`
+          );
+        }
+
+      });
+      app.post("/api/v1/user/payment/fail/:tranId", async (req, res) => {
+        const result = await appointments.updateOne(
+          { _id: new ObjectId(req.query.id)  },
+          {
+            $set: {
+              payment: "failed",
+              // transactionId: req.params.tranId
+            },
+          }
+        );
+        if (result.modifiedCount > 0) {
+          res.redirect(
+            `http://localhost:5173/api/v1/payment-failed/${req.params.tranId}`
+          );
+        }
+      });
     });
 
     console.log(
