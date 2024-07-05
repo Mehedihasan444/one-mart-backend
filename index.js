@@ -15,6 +15,9 @@ const store_passwd = process.env.storePasswd;
 const is_live = false; //true for live, false for sandbox
 
 
+
+
+
 // ==========middleware==========
 app.use(
   cors({
@@ -36,6 +39,7 @@ const client = new MongoClient(uri, {
 });
 
 
+
 async function run() {
   try {
     const users = client.db("OneMart").collection("users");
@@ -47,6 +51,10 @@ async function run() {
     // post user info
     app.post("/users", async (req, res) => {
       const user = req.body;
+      const isExist = await users.findOne({ email: user.email });
+      if (isExist) {
+        return res.send({ message: "already exists" });
+      }
       const result = await users.insertOne(user);
       res.send(result);
     });
