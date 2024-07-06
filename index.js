@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const SSLCommerzPayment = require('sslcommerz-lts')
+const SSLCommerzPayment = require("sslcommerz-lts");
 // const jwt = require("jsonwebtoken");
 // const cookieParser=require('cookie-parser')
 require("dotenv").config();
@@ -8,15 +8,10 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
-
 // ssl commerz cresentials
 const store_id = process.env.storeID;
 const store_passwd = process.env.storePasswd;
 const is_live = false; //true for live, false for sandbox
-
-
-
-
 
 // ==========middleware==========
 app.use(
@@ -37,8 +32,6 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
-
-
 
 async function run() {
   try {
@@ -99,7 +92,11 @@ async function run() {
     });
     // get all appointments
     app.get("/appointments", async (req, res) => {
-      const result = await appointments.find().toArray();
+      const query = req.query.filter
+      const filter = query
+      ? { service_type: { $regex: `.*${query}.*`, $options: "i" } }
+      : {};
+      const result = await appointments.find(filter).toArray();
       res.send(result);
     });
     // get all appointments
@@ -108,11 +105,14 @@ async function run() {
       const result = await appointments.find({ email }).toArray();
       res.send(result);
     });
-    // delete appointments
-    app.delete("/appointments/:id", async (req, res) => {
+    // cancelled appointments
+    app.put("/appointments/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const result = await appointments.deleteOne(query);
+      const update = {
+        $set: { status: "Cancelled" },
+      };
+      const result = await appointments.updateOne(query, update,{upsert: true});
       res.send(result);
     });
 
@@ -243,7 +243,7 @@ async function run() {
         ship_postcode: 1000,
         ship_country: "Bangladesh",
       };
-      
+
       const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
       sslcz.init(data).then((apiResponse) => {
         // Redirect the user to payment gateway
@@ -254,26 +254,27 @@ async function run() {
 
       app.post("/api/v1/user/payment/success/:tranId", async (req, res) => {
         const result = await appointments.updateOne(
-          { _id: new ObjectId(req.query.id)  },
+          { _id: new ObjectId(req.query.id) },
           {
             $set: {
               payment: "complete",
+              status: "done",
               transactionId: req.params.tranId,
             },
-        },{
-          upsert: true,
-        }
+          },
+          {
+            upsert: true,
+          }
         );
         if (result.modifiedCount > 0) {
           res.redirect(
             `http://localhost:5173/api/v1/payment-complete/${req.params.tranId}`
           );
         }
-
       });
       app.post("/api/v1/user/payment/fail/:tranId", async (req, res) => {
         const result = await appointments.updateOne(
-          { _id: new ObjectId(req.query.id)  },
+          { _id: new ObjectId(req.query.id) },
           {
             $set: {
               payment: "failed",
